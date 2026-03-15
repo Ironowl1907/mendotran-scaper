@@ -1,4 +1,5 @@
 import requests
+import json
 
 stops_url = "https://owa.visionblo.com/api/mendoza/search"
 stops_info_url = "https://owa.visionblo.com/api/mendoza/arrivals"
@@ -26,7 +27,10 @@ def mendotran_request_stops():
         "no_favorites": True
     }
     r = requests.post(stops_url, json=payload, headers=headers)
-    return r
+    try:
+        return r.json()
+    except requests.exceptions.JSONDecodeError:
+        print(f"Request error, no json response, http error: {r.status_code}")
 
 
 def mendotran_request_stop_info(stop_id: str):
@@ -37,4 +41,7 @@ def mendotran_request_stop_info(stop_id: str):
         "xss": "3b935fa2ffe3c87bc65363e2",
     }
     r = requests.post(stops_info_url, json=payload, headers=headers)
-    return r
+    try:
+        return r.json()
+    except requests.exceptions.JSONDecodeError:
+        print(f"Request error, no json response, http error: {r.status_code}")
