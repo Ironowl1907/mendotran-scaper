@@ -1,6 +1,7 @@
 import requests
 
 stops_url = "https://owa.visionblo.com/api/mendoza/search"
+stops_info_url = "https://owa.visionblo.com/api/mendoza/arrivals"
 headers = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:139.0) Gecko/20100101 Firefox/139.0",
     "Accept": "*/*",
@@ -25,4 +26,15 @@ def mendotran_request_stops():
         "no_favorites": True
     }
     r = requests.post(stops_url, json=payload, headers=headers)
+    return r
+
+
+def mendotran_request_stop_info(stop_id: str):
+    payload = {
+        "first_time": "true",
+        "stop_id": stop_id,
+        "token": "OQkGfHEQqWRO9zXRQgJb",
+        "xss": "3b935fa2ffe3c87bc65363e2",
+    }
+    r = requests.post(stops_info_url, json=payload, headers=headers)
     return r

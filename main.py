@@ -3,7 +3,7 @@ import stops as stops
 
 
 def main():
-    r = stops.mendotran_request_stops()
+    r = stops.mendotran_request_stop_info(25600)
     if (r.status_code == 200):
         print(r.text)
     else:
