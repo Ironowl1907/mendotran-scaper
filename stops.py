@@ -92,6 +92,25 @@ def mendotran_generate_stops_db(json_data: json):
             except sqlite3.OperationalError as e:
                 print(f"Error inserting data: {e}")
                 exit(1)
-            break
 
         connection.commit()
+
+
+def mendotran_request_stop_info(stop_id: int):
+    payload = {
+        "token": "OQkGfHEQqWRO9zXRQgJb",
+        "stop_id": stop_id,
+        "first_time": False,
+        "xss": "0549a7684ade3d12e894d6df"
+    }
+
+    try:
+        r = requests.post(stops_info_url, json=payload, headers=headers)
+        r.raise_for_status()
+        return r.json()
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+    except requests.exceptions.JSONDecodeError:
+        print(f"No JSON response. Status code: {r.status_code}")
+        print(f"Raw Response: {r.text}")
+    return None
