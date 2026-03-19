@@ -34,26 +34,30 @@ def mendotran_request_stops():
         print(f"Request error, no json response, http error: {r.status_code}")
 
 
-def mendotran_request_stop_info(stop_id: str):
+def mendotran_request_services():
     payload = {
-        "first_time": "true",
-        "stop_id": stop_id,
         "token": "OQkGfHEQqWRO9zXRQgJb",
-        "xss": "3b935fa2ffe3c87bc65363e2",
+        "text": "",
+        "xss": "86adb365fced6934d3ff6bec",
+        "search": ["services"],
+        "no_favorites": True
     }
-    r = requests.post(stops_info_url, json=payload, headers=headers)
+    r = requests.post(stops_url, json=payload, headers=headers)
     try:
         return r.json()
     except requests.exceptions.JSONDecodeError:
         print(f"Request error, no json response, http error: {r.status_code}")
 
 
-def mendotran_generate_stops_db(json_data: json):
-    with sqlite3.connect('stops.db') as connection:
+def mendotran_generate_db(json_data: json):
+    print("Creating DB")
+    with sqlite3.connect('mendotran.db') as connection:
 
         cursor = connection.cursor()
 
-        create_table_query = '''
+        create_table_querys = {}
+
+        create_table_querys["stops"] = '''
         CREATE TABLE IF NOT EXISTS Stops (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             type TEXT NOT NULL,
@@ -64,18 +68,61 @@ def mendotran_generate_stops_db(json_data: json):
             location TEXT
         );
         '''
-        cursor.execute(create_table_query)
 
-        insert_query = '''
+        create_table_querys["Services"] = '''
+        CREATE TABLE IF NOT EXISTS Services(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type TEXT NOT NULL,
+            service_id INT NOT NULL,
+            group_id INT NOT NULL,
+            code TEXT,
+            name TEXT,
+            color TEXT,
+            mode TEXT
+        );
+        '''
+
+        create_table_querys["Groups"] = '''
+        CREATE TABLE IF NOT EXISTS Groups (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            group_id TEXT
+            name TEXT
+        );
+        '''
+
+        insert_querys = {}
+
+        insert_querys["Stops"] = '''
         INSERT INTO Stops
         (type, stop_id, coordinate_lat, coordinate_lon, code, location)
         VALUES
         (?, ?, ?, ?, ?, ?)
         '''
 
-        stops_list = json_data["search"][0]
-        print(stops_list)
+        insert_querys["Services"] = '''
+        INSERT INTO Services
+        (type, services_id, group_id, code, name, color, mode)
+        VALUES
+        (?, ?, ?, ?, ?, ?, ?)
+        '''
 
+        insert_querys["Groups"] = '''
+        INSERT INTO Groups
+        (group_id, name)
+        VALUES
+        (?, ?)
+        '''
+
+        for _, query in create_table_querys:
+            res = cursor.execute(query)
+            print(f"Created table: {res.fetchone()}")
+
+        exit(1)
+
+        ##################################################################
+        ########################### Stops Table ###########################
+        ##################################################################
+        print("Populating stops table")
         for stop in json_data["search"]:
             insert_data = [
                 str(stop["type"]),
@@ -88,7 +135,49 @@ def mendotran_generate_stops_db(json_data: json):
             for data in insert_data:
                 print(data)
             try:
-                cursor.execute(insert_query, insert_data)
+                cursor.execute(stops_insert_query, insert_data)
+            except sqlite3.OperationalError as e:
+                print(f"Error inserting data: {e}")
+                exit(1)
+
+        ##################################################################
+        ########################### Services Table ########################
+        ##################################################################
+        print("Populating services table")
+        for stop in json_data["search"]:
+            insert_data = [
+                str(stop["type"]),
+                int(stop["stop_id"]),
+                float(stop["coordinates"][0]),
+                float(stop["coordinates"][1]),
+                str(stop["code"]),
+                str(stop["location"]),
+            ]
+            for data in insert_data:
+                print(data)
+            try:
+                cursor.execute(stops_insert_query, insert_data)
+            except sqlite3.OperationalError as e:
+                print(f"Error inserting data: {e}")
+                exit(1)
+
+        ##################################################################
+        ########################### Groups Table ##########################
+        ##################################################################
+        print("Populating groups table")
+        for stop in json_data["search"]:
+            insert_data = [
+                str(stop["type"]),
+                int(stop["stop_id"]),
+                float(stop["coordinates"][0]),
+                float(stop["coordinates"][1]),
+                str(stop["code"]),
+                str(stop["location"]),
+            ]
+            for data in insert_data:
+                print(data)
+            try:
+                cursor.execute(stops_insert_query, insert_data)
             except sqlite3.OperationalError as e:
                 print(f"Error inserting data: {e}")
                 exit(1)
